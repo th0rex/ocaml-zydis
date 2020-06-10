@@ -1,27 +1,35 @@
+(env
+ (dev
+  (flags (:standard -w +42)))
+ (release
+  (flags (:standard -O3))))
 
 (library
-  (name zydis)
-  (foreign_stubs
-    (language c)
-    (names zydis_stubs)
-    (include_dirs
-      zydis-c/include
-      zydis-c/dependencies/zycore/include)
-    (flags -O2 -g)))
+ (name zydis)
+ (foreign_archives zydis-c)
+ (foreign_stubs
+  (language c)
+  (names zydis_stubs)
+  (include_dirs
+    zydis-c/include
+    zydis-c/dependencies/zycore/include
+    config)
+  (flags -O2 -g -fPIC)))
 
 (data_only_dirs zydis-c)
 
 (rule
-  (deps (source_tree zydis-c))
-  (targets libzydis-c.a)
-  (action
-    (no-infer
-      (progn
-        (chdir zydis-c
-          (progn
-            (run
-              cmake -B build -S .
-              -DZYDIS_BUILD_EXAMPLES=OFF
-              -DZYDIS_BUILD_TOOLS=OFF)
-            (run cmake --build build)))
-        (copy zydis-c/build/libZydis.a libzydis-c.a)))))
+ (deps (source_tree zydis-c))
+ (targets libzydis-c.a)
+ (action
+  (no-infer
+   (progn
+    (chdir zydis-c
+     (progn
+      (run
+        cmake -B build -S .
+        -DCMAKE_C_FLAGS=-fPIC
+        -DZYDIS_BUILD_EXAMPLES=OFF
+        -DZYDIS_BUILD_TOOLS=OFF)
+      (run cmake --build build)))
+    (copy zydis-c/build/libZydis.a libzydis-c.a)))))
