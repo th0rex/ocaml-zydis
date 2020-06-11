@@ -17,7 +17,7 @@ value zydis_get_version_byte(value unit) {
   CAMLreturn (caml_copy_int64(zydis_get_version()));
 }
 
-value zydis_is_feature_enabled_byte(value feature) {
+value zydis_is_feature_enabled(value feature) {
   CAMLparam1 (feature);
   CAMLreturn (Val_bool(ZydisIsFeatureEnabled(Unsigned_long_val(feature)) == ZYAN_STATUS_TRUE));
 }
