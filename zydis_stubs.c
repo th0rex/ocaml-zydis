@@ -50,17 +50,6 @@ value zydis_decoder_enable(value decoder, value mode, value enabled) {
   CAMLreturn (Val_unit);
 }
 
-static struct custom_operations zydis_insn_ops = {
-  .identifier                                  = "ZydisDecodedInstruction",
-  .finalize                                    = NULL,
-  .compare                                     = NULL,
-  .hash                                        = NULL,
-  .serialize                                   = NULL,
-  .deserialize                                 = NULL,
-  .compare_ext                                 = NULL,
-  .fixed_length                                = NULL,
-};
-
 value make_some(value v) {
   CAMLparam1 (v);
   value some = caml_alloc_small(1, 0);
@@ -154,9 +143,6 @@ static value zydis_decoder_decode_internal(value decoder, value bytes, const siz
     return Val_unit;
   }
 
-  // TODO: If we allocate on the stack we save gc pressure in case decoding fails, i.e.
-  // if we would only alloc + memcpy in case of success.
-  // raw_insn                        = caml_alloc_custom(&zydis_insn_ops, sizeof(ZydisDecodedInstruction), 0, 1);
   ZydisDecodedInstruction z_insn;
 
   ZyanStatus res = ZydisDecoderDecodeBuffer(
@@ -227,8 +213,6 @@ static value zydis_decoder_decode_internal(value decoder, value bytes, const siz
 
   // We also leave out the raw info.
   Store_field(insn, 14, Val_unit);
-  // // Store the raw instruction.
-  // Store_field(insn, 15, raw_insn);
 
   value some = caml_alloc_small(1, 0);
   Store_field(some, 0, insn);
