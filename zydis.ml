@@ -6,17 +6,11 @@ open Enums
 
 type zydis_decoder
 type zydis_instruction
-type zydis_operand
-
-(* TODO: Maybe "better" ints, Int8, Int16, etc *)
-
-type element_size = int
 
 type immediate =
   | Signed of int64
   | Unsigned of int64
 
-(* TODO: Maybe resolve this also already to absolute immediates? *)
 type relative =
   | Absolute
   | Relative
@@ -38,31 +32,14 @@ module Operand : sig
 
   type t =
     { id: int;
-      (* TODO: redundand with kind, right? *)
-      ty: operand_type;
-      vis: operand_visibility;
+      visibility: operand_visibility;
       actions: operand_action;
-      (* TODO: What about all the NONE cases in the enums?
-               We probably could do -1 on the c side, remove the NONE cases, and handle them with an
-               option explicitly so this would become operand_encoding option as well.
-               For registers in Mem thats what well do, for registers in Reg it’s safe to assume that
-               its never NONE (other I’d consider that a bug in zydis).
-               For cpuflag_action I’m not sure, I think we’d better turn that into
-               (cpuflag * cpuflag_action) Array.t and prune all the NONEs.
-               branch_type can easily be turned into branch_type option, same for exception_class.
-               instruction_segment I won’t currently use I think.
-
-               so, removeing all NONEs should work, and then doing - 1 on the c side if != NONE and
-               creating a Some, otherwise creating a None, except for Reg of register which I’ll assume
-               to always be != NONE.
-       *)
       encoding: operand_encoding;
       bit_size: int;
       el_ty: element_type;
-      el_size: element_size;
+      el_size: int;
       el_count: int;
       kind: kind;
-      raw_operand: zydis_operand;
     }
 end = struct
   type kind =
@@ -81,16 +58,14 @@ end = struct
 
   type t =
     { id: int;
-      ty: operand_type;
-      vis: operand_visibility;
+      visibility: operand_visibility;
       actions: operand_action;
       encoding: operand_encoding;
       bit_size: int;
       el_ty: element_type;
-      el_size: element_size;
+      el_size: int;
       el_count: int;
       kind: kind;
-      raw_operand: zydis_operand;
     }
 end
 
@@ -108,6 +83,7 @@ module Attribute : sig
   val is_relative : t -> bool
   val is_privileged : t -> bool
   val accesses_flags : t -> bool
+  (* conditional reads and writes *)
   val reads_cpu_state : t -> bool
   val writes_cpu_state : t -> bool
   val reads_fpu_state : t -> bool
@@ -149,6 +125,7 @@ module Attribute : sig
   val has_branch_hint : t -> bool
   val has_any_rep : t -> bool
   val accepts_any_rep : t -> bool
+  (* conditionally might access (i.e. read or write) the state *)
   val touches_cpu_state : t -> bool
   val touches_fpu_state : t -> bool
   val touches_xmm_state : t -> bool
@@ -214,7 +191,13 @@ end
 
 module Instruction : sig
   type avx
-  type meta
+  type meta =
+    { category: instruction_category;
+      isa_set: isaset;
+      isa_ext: isaext;
+      branch_type: branch_type option;
+      exception_class: exception_class option;
+    }
   type raw
 
   type t =
@@ -229,15 +212,21 @@ module Instruction : sig
       address_width: int;
       operands: Operand.t Array.t;
       attributes: Attribute.t;
-      accessed_flags: cpuflag_action Array.t;
-      avx: avx option;
+      flags: (cpuflag * cpuflag_action) Array.t;
+      avx: avx;
       meta: meta;
       raw: raw;
       raw_insn: zydis_instruction;
     }
 end = struct
   type avx
-  type meta
+  type meta =
+    { category: instruction_category;
+      isa_set: isaset;
+      isa_ext: isaext;
+      branch_type: branch_type option;
+      exception_class: exception_class option;
+    }
   type raw
 
   type t =
@@ -252,8 +241,8 @@ end = struct
       address_width: int;
       operands: Operand.t Array.t;
       attributes: Attribute.t;
-      accessed_flags: cpuflag_action Array.t;
-      avx: avx option;
+      flags: (cpuflag * cpuflag_action) Array.t;
+      avx: avx;
       meta: meta;
       raw: raw;
       raw_insn: zydis_instruction;
@@ -264,25 +253,27 @@ external get_version : unit -> (int64 [@unboxed])
   = "zydis_get_version_byte" "zydis_get_version" [@@noalloc]
 external is_feature_enabled : feature -> bool = "zydis_is_feature_enabled_byte"
 
-external zydis_decoder_init : machine_mode -> address_width -> zydis_decoder = "zydis_decoder_init_byte"
-external zydis_decoder_enable : zydis_decoder -> machine_mode -> bool -> unit = "zydis_decoder_enable_byte"
-external zydis_decoder_decode : zydis_decoder -> bytes -> Instruction.t option = "zydis_decoder_decode_byte"
+external zydis_decoder_init : machine_mode -> address_width -> zydis_decoder = "zydis_decoder_init"
+external zydis_decoder_enable : zydis_decoder -> machine_mode -> bool -> unit = "zydis_decoder_enable"
+external zydis_decoder_decode_long : zydis_decoder -> bytes -> int -> Instruction.t option = "zydis_decoder_decode_long"
+external zydis_decoder_decode_native : zydis_decoder -> bytes -> nativeint -> Instruction.t option = "zydis_decoder_decode_native"
 
 module Decoder : sig
   type t
 
   val create : mode:machine_mode -> width:address_width -> t
   val enable : decoder:t -> mode:machine_mode -> enabled:bool -> unit
-  (* TODO: Proper error handling maybe *)
-  val decode : decoder:t -> buffer:bytes -> Instruction.t option
+  val decode : decoder:t -> ?offset:int -> buffer:bytes -> Instruction.t option
+  (* If you need the full precision for the offset, which you
+     very likely don’t and also is slower. *)
+  val decode_n : decoder:t -> ?offset:nativeint -> buffer:bytes -> Instruction.t option
 end = struct
   type t = zydis_decoder
 
   let create ~mode ~width = zydis_decoder_init mode width
-
   let enable ~decoder ~mode ~enabled = zydis_decoder_enable decoder mode enabled
-
-  let decode ~decoder ~buffer = zydis_decoder_decode decoder buffer
+  let decode ~decoder ?(offset=0) ~buffer = zydis_decoder_decode_long decoder buffer offset
+  let decode_n ~decoder ?(offset=0n) ~buffer = zydis_decoder_decode_native decoder buffer offset
 end
 
 let version () =

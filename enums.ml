@@ -1983,7 +1983,6 @@ type operand_type =
   | IMMEDIATE
 
 type operand_encoding =
-  | NONE
   | MODRM_REG
   | MODRM_RM
   | OPCODE
@@ -2056,7 +2055,6 @@ type opcode_map =
   | XOPA
 
 type register =
-  | NONE
   | AL
   | CL
   | DL
@@ -2364,7 +2362,6 @@ type cpuflag =
   | C3
 
 type cpuflag_action =
-  | NONE
   | TESTED
   | TESTED_MODIFIED
   | MODIFIED
@@ -2373,13 +2370,11 @@ type cpuflag_action =
   | UNDEFINED
 
 type branch_type =
-  | NONE
   | SHORT
   | NEAR
   | FAR
 
 type exception_class =
-  | NONE
   | SSE1
   | SSE2
   | SSE3
@@ -2563,7 +2558,6 @@ type decorator =
   | EH
 
 type instruction_segment =
-  | NONE
   | PREFIXES
   | REX
   | XOP
