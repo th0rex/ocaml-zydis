@@ -145,8 +145,7 @@ static value wrap_decoded_operand(const ZydisDecodedOperand* z_op) {
 
 static value zydis_decoder_decode_internal(value decoder, value bytes, const size_t offs) {
   CAMLparam2 (decoder, bytes);
-  CAMLlocal5 (raw_insn, insn, meta, operands, flags);
-  CAMLlocal1 (tmp_flag);
+  CAMLlocal5 (insn, meta, operands, flags, tmp_flag);
 
   const size_t len = caml_string_length(bytes);
   if (offs >= len) {
@@ -157,45 +156,45 @@ static value zydis_decoder_decode_internal(value decoder, value bytes, const siz
 
   // TODO: If we allocate on the stack we save gc pressure in case decoding fails, i.e.
   // if we would only alloc + memcpy in case of success.
-  raw_insn                        = caml_alloc_custom(&zydis_insn_ops, sizeof(ZydisDecodedInstruction), 0, 1);
-  ZydisDecodedInstruction* z_insn = Data_custom_val(raw_insn);
+  // raw_insn                        = caml_alloc_custom(&zydis_insn_ops, sizeof(ZydisDecodedInstruction), 0, 1);
+  ZydisDecodedInstruction z_insn;
 
   ZyanStatus res = ZydisDecoderDecodeBuffer(
     Data_custom_val(decoder),
     String_val(bytes) + offs,
     len - offs,
-    z_insn
+    &z_insn
     );
   if (res != ZYAN_STATUS_SUCCESS) {
     return Val_unit;
   }
 
-  insn = caml_alloc_tuple(16);
+  insn = caml_alloc_tuple(15);
   // Store some straight forward things
-  Store_field(insn,  0, Val_long(z_insn->machine_mode));
-  Store_field(insn,  1, Val_long(z_insn->mnemonic));
-  Store_field(insn,  2, Val_long(z_insn->length));
-  Store_field(insn,  3, Val_long(z_insn->encoding));
-  Store_field(insn,  4, Val_long(z_insn->opcode_map));
-  Store_field(insn,  5, Val_long(z_insn->opcode));
-  Store_field(insn,  6, Val_long(z_insn->stack_width));
-  Store_field(insn,  7, Val_long(z_insn->operand_width));
-  Store_field(insn,  8, Val_long(z_insn->address_width));
+  Store_field(insn,  0, Val_long(z_insn.machine_mode));
+  Store_field(insn,  1, Val_long(z_insn.mnemonic));
+  Store_field(insn,  2, Val_long(z_insn.length));
+  Store_field(insn,  3, Val_long(z_insn.encoding));
+  Store_field(insn,  4, Val_long(z_insn.opcode_map));
+  Store_field(insn,  5, Val_long(z_insn.opcode));
+  Store_field(insn,  6, Val_long(z_insn.stack_width));
+  Store_field(insn,  7, Val_long(z_insn.operand_width));
+  Store_field(insn,  8, Val_long(z_insn.address_width));
 
   // Create operands
-  operands = caml_alloc_tuple(z_insn->operand_count);
-  for (unsigned i = 0; i < z_insn->operand_count; i++) {
-    Store_field(operands, i, wrap_decoded_operand(&z_insn->operands[i]));
+  operands = caml_alloc_tuple(z_insn.operand_count);
+  for (unsigned i = 0; i < z_insn.operand_count; i++) {
+    Store_field(operands, i, wrap_decoded_operand(&z_insn.operands[i]));
   }
   Store_field(insn,  9, operands);
 
   // Copy attributes
-  Store_field(insn, 10, caml_copy_int64(z_insn->attributes));
+  Store_field(insn, 10, caml_copy_int64(z_insn.attributes));
 
   // Create flag array
   unsigned flag_count = 0;
   for (unsigned i = 0; i < ZYDIS_CPUFLAG_MAX_VALUE + 1; i++) {
-    if (z_insn->accessed_flags[i].action != 0) {
+    if (z_insn.accessed_flags[i].action != 0) {
       flag_count += 1;
     }
   }
@@ -203,10 +202,10 @@ static value zydis_decoder_decode_internal(value decoder, value bytes, const siz
   flags = caml_alloc_tuple(flag_count);
 
   for (unsigned i = 0, j = 0; i < ZYDIS_CPUFLAG_MAX_VALUE + 1; i++) {
-    if (z_insn->accessed_flags[i].action != 0) {
+    if (z_insn.accessed_flags[i].action != 0) {
       tmp_flag = caml_alloc_tuple(2);
       Store_field(tmp_flag, 0, Val_long(i));
-      Store_field(tmp_flag, 1, Val_long(z_insn->accessed_flags[i].action - 1));
+      Store_field(tmp_flag, 1, Val_long(z_insn.accessed_flags[i].action - 1));
 
       Store_field(flags, j++, tmp_flag);
     }
@@ -218,18 +217,18 @@ static value zydis_decoder_decode_internal(value decoder, value bytes, const siz
 
   // Fill in the meta info.
   meta = caml_alloc_tuple(5);
-  Store_field(meta, 0, Val_long(z_insn->meta.category));
-  Store_field(meta, 1, Val_long(z_insn->meta.isa_set));
-  Store_field(meta, 2, Val_long(z_insn->meta.isa_ext));
-  Store_optional_field(meta, 3, z_insn->meta.branch_type);
-  Store_optional_field(meta, 4, z_insn->meta.exception_class);
+  Store_field(meta, 0, Val_long(z_insn.meta.category));
+  Store_field(meta, 1, Val_long(z_insn.meta.isa_set));
+  Store_field(meta, 2, Val_long(z_insn.meta.isa_ext));
+  Store_optional_field(meta, 3, z_insn.meta.branch_type);
+  Store_optional_field(meta, 4, z_insn.meta.exception_class);
 
   Store_field(insn, 13, meta);
 
   // We also leave out the raw info.
   Store_field(insn, 14, Val_unit);
-  // Store the raw instruction.
-  Store_field(insn, 15, raw_insn);
+  // // Store the raw instruction.
+  // Store_field(insn, 15, raw_insn);
 
   value some = caml_alloc_small(1, 0);
   Store_field(some, 0, insn);

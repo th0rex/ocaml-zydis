@@ -3,7 +3,6 @@ module Enums = Enums
 open Enums
 
 type zydis_decoder
-type zydis_instruction
 
 type immediate =
   | Signed of int64
@@ -143,7 +142,6 @@ module Instruction = struct
       avx: avx;
       meta: meta;
       raw: raw;
-      raw_insn: zydis_instruction;
     }
 end
 
