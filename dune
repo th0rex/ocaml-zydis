@@ -29,6 +29,7 @@
       (run
         cmake -B build -S .
         -DCMAKE_C_FLAGS=-fPIC
+        -DCMAKE_BUILD_TYPE=Release
         -DZYDIS_BUILD_EXAMPLES=OFF
         -DZYDIS_BUILD_TOOLS=OFF)
       (run cmake --build build)))
