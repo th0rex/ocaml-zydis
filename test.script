@@ -1,7 +1,0 @@
-open Zydis.Enums
-
-let decoder = Zydis.Decoder.create ~mode:LONG_64 ~width:AddressWidth64
-
-let buffer = Bytes.of_string "\x75\x2f"
-
-let insn = Zydis.Decoder.decode ~decoder ~buffer ~offset:0
