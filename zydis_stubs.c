@@ -23,31 +23,31 @@ value zydis_is_feature_enabled_byte(value feature) {
 }
 
 static struct custom_operations zydis_decoder_ops = {
-	.identifier																			= "ZydisDecoder",
-	.finalize																				= NULL,
-	.compare																				= NULL,
-	.hash																						= NULL,
-	.serialize																			= NULL,
-	.deserialize																		= NULL,
-	.compare_ext																		= NULL,
-	.fixed_length																		= NULL,
+  .identifier                                     = "ZydisDecoder",
+  .finalize                                       = NULL,
+  .compare                                        = NULL,
+  .hash                                           = NULL,
+  .serialize                                      = NULL,
+  .deserialize                                    = NULL,
+  .compare_ext                                    = NULL,
+  .fixed_length                                   = NULL,
 };
 
 value zydis_decoder_init(value mode, value width) {
   CAMLparam2 (mode, width);
-	value decoder = caml_alloc_custom(&zydis_decoder_ops, sizeof(ZydisDecoder), 0, 1);
+  value decoder = caml_alloc_custom(&zydis_decoder_ops, sizeof(ZydisDecoder), 0, 1);
   // TODO: Technically should check result here
-	ZydisDecoderInit(Data_custom_val(decoder), Unsigned_long_val(mode), Unsigned_long_val(width));
+  ZydisDecoderInit(Data_custom_val(decoder), Unsigned_long_val(mode), Unsigned_long_val(width));
   CAMLreturn (decoder);
 }
 
 value zydis_decoder_enable(value decoder, value mode, value enabled) {
   CAMLparam3 (decoder, mode, enabled);
-	ZydisDecoderEnableMode(
-		Data_custom_val(decoder),
-		Unsigned_long_val(mode),
-		Bool_val(enabled));
-	CAMLreturn (Val_unit);
+  ZydisDecoderEnableMode(
+    Data_custom_val(decoder),
+    Unsigned_long_val(mode),
+    Bool_val(enabled));
+  CAMLreturn (Val_unit);
 }
 
 static struct custom_operations zydis_insn_ops = {
