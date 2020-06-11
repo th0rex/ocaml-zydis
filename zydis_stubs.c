@@ -87,9 +87,6 @@ static value wrap_decoded_operand(const ZydisDecodedOperand* z_op) {
   op = caml_alloc_tuple(9);
   Store_field(op, 0, Val_long(z_op->id));
   Store_field(op, 1, Val_long(z_op->visibility));
-  // TODO: We’ll only ever get READ/WRITE/CONDREAD/CONDWRITE and none of the
-  // combinations by this, need some way to remove the combinations from the
-  // bindings.
   // NOTE: Subtracting 1 because the first value is 1.
   Store_field(op, 2, Val_long(z_op->actions - 1));
   Store_field(op, 3, Val_long(z_op->encoding));
