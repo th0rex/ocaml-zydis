@@ -2024,18 +2024,6 @@ type operand_visibility =
   | IMPLICIT
   | HIDDEN
 
-type operand_action =
-  | READ
-  | WRITE
-  | CONDREAD
-  | CONDWRITE
-  | READWRITE
-  | CONDREAD_CONDWRITE
-  | READ_CONDWRITE
-  | CONDREAD_WRITE
-  | MASK_READ
-  | MASK_WRITE
-
 type instruction_encoding =
   | LEGACY
   | InstructionEncoding3DNOW

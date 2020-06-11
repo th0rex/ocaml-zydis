@@ -87,8 +87,7 @@ static value wrap_decoded_operand(const ZydisDecodedOperand* z_op) {
   op = caml_alloc_tuple(9);
   Store_field(op, 0, Val_long(z_op->id));
   Store_field(op, 1, Val_long(z_op->visibility));
-  // NOTE: Subtracting 1 because the first value is 1.
-  Store_field(op, 2, Val_long(z_op->actions - 1));
+  Store_field(op, 2, Val_long(z_op->actions));
   Store_field(op, 3, Val_long(z_op->encoding));
   Store_field(op, 4, Val_long(z_op->size));
   Store_field(op, 5, Val_long(z_op->element_type));

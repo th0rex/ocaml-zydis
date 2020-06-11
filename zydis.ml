@@ -16,6 +16,21 @@ type relative =
   | Relative
 
 module Operand : sig
+  module Action : sig
+    type t
+
+    val is_read : t -> bool
+    val is_write : t -> bool
+    val is_condread : t -> bool
+    val is_condwrite : t -> bool
+    val is_read_and_write : t -> bool
+    val is_condread_and_condwrite : t -> bool
+    val is_read_and_condwrite : t -> bool
+    val is_condread_and_write : t -> bool
+    val is_any_read : t -> bool
+    val is_any_write : t -> bool
+  end
+
   type kind =
     | Unused
     | Reg of register
@@ -33,7 +48,7 @@ module Operand : sig
   type t =
     { id: int;
       visibility: operand_visibility;
-      actions: operand_action;
+      actions: Action.t;
       encoding: operand_encoding;
       bit_size: int;
       el_ty: element_type;
@@ -42,6 +57,21 @@ module Operand : sig
       kind: kind;
     }
 end = struct
+  module Action = struct
+    type t = int
+
+    let is_read x = (x land 0x01) = 0x01
+    let is_write x = (x land 0x02) = 0x02
+    let is_condread x = (x land 0x04) = 0x04
+    let is_condwrite x = (x land 0x08) = 0x08
+    let is_read_and_write x = (x land 0x03) = 0x03
+    let is_condread_and_condwrite x = (x land 0x0C) = 0x0C
+    let is_read_and_condwrite x = (x land 0x09) = 0x09
+    let is_condread_and_write x = (x land 0x06) = 0x06
+    let is_any_read x = (x land 0x05) <> 0x00
+    let is_any_write x = (x land 0x0A) <> 0x00
+  end
+
   type kind =
     | Unused
     | Reg of register
@@ -59,7 +89,7 @@ end = struct
   type t =
     { id: int;
       visibility: operand_visibility;
-      actions: operand_action;
+      actions: Action.t;
       encoding: operand_encoding;
       bit_size: int;
       el_ty: element_type;
