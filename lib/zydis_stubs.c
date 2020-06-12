@@ -270,7 +270,7 @@ value zydis_formatter_format_insn(value formatter, value insn, value addr)
     Int64_val(addr));
   size_t len = strlen(buffer);
   string = caml_alloc_string(len);
-  memcpy(String_val(string), buffer, len);
+  memcpy(Bp_val(string), buffer, len);
 
   CAMLreturn (string);
 }
