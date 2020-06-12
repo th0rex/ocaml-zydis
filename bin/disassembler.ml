@@ -6,8 +6,6 @@ let decoder = Decoder.create ~mode:LONG_64 ~width:64
 let formatter = Formatter.create ~style:INTEL
 
 module Disassembler = struct
-  type t = int -> Instruction.t option
-
   open Instruction
 
   let create = Decoder.decode
