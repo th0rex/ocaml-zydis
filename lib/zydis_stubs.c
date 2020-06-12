@@ -73,46 +73,46 @@ static value wrap_decoded_operand(const ZydisDecodedOperand* z_op) {
 
   // Create the appropiate kind.
   switch (z_op->type) {
-  case ZYDIS_OPERAND_TYPE_UNUSED:
-    kind = Val_long(0);
-    break;
-  case ZYDIS_OPERAND_TYPE_REGISTER:
-    kind = caml_alloc(1, 0);
-    Store_field(kind, 0, Val_long(z_op->reg.value - 1));
-    break;
-  case ZYDIS_OPERAND_TYPE_MEMORY:
-    kind = caml_alloc(6, 1);
-    Store_field(kind, 0, Val_long(z_op->mem.type));
-    Store_optional_field(kind, 1, z_op->mem.segment);
-    Store_optional_field(kind, 2, z_op->mem.base);
-    Store_optional_field(kind, 3, z_op->mem.index);
-    Store_field(kind, 4, Val_long(z_op->mem.scale));
-    if (z_op->mem.disp.has_displacement) {
-      Store_field(kind, 5, make_some(caml_copy_int64(z_op->mem.disp.value)));
-    } else {
-      Store_field(kind, 5, Val_unit);
-    }
-    break;
-  case ZYDIS_OPERAND_TYPE_POINTER:
-    kind = caml_alloc(2, 2);
-    Store_field(kind, 0, Val_long(z_op->ptr.segment));
-    Store_field(kind, 1, caml_copy_int32(z_op->ptr.offset));
-    break;
-  case ZYDIS_OPERAND_TYPE_IMMEDIATE:
-    kind = caml_alloc(2, 3);
-    if (z_op->imm.is_relative) {
-      Store_field(kind, 0, Val_long(1));
-    } else {
-      Store_field(kind, 0, Val_long(0));
-    }
-    if (z_op->imm.is_signed) {
-      imm = caml_alloc(1, 0);
-    } else {
-      imm = caml_alloc(1, 1);
-    }
-    Store_field(imm, 0, caml_copy_int64(z_op->imm.value.s));
-    Store_field(kind, 1, imm);
-    break;
+    case ZYDIS_OPERAND_TYPE_UNUSED:
+      kind = Val_long(0);
+      break;
+    case ZYDIS_OPERAND_TYPE_REGISTER:
+      kind = caml_alloc(1, 0);
+      Store_field(kind, 0, Val_long(z_op->reg.value - 1));
+      break;
+    case ZYDIS_OPERAND_TYPE_MEMORY:
+      kind = caml_alloc(6, 1);
+      Store_field(kind, 0, Val_long(z_op->mem.type));
+      Store_optional_field(kind, 1, z_op->mem.segment);
+      Store_optional_field(kind, 2, z_op->mem.base);
+      Store_optional_field(kind, 3, z_op->mem.index);
+      Store_field(kind, 4, Val_long(z_op->mem.scale));
+      if (z_op->mem.disp.has_displacement) {
+        Store_field(kind, 5, make_some(caml_copy_int64(z_op->mem.disp.value)));
+      } else {
+        Store_field(kind, 5, Val_unit);
+      }
+      break;
+    case ZYDIS_OPERAND_TYPE_POINTER:
+      kind = caml_alloc(2, 2);
+      Store_field(kind, 0, Val_long(z_op->ptr.segment));
+      Store_field(kind, 1, caml_copy_int32(z_op->ptr.offset));
+      break;
+    case ZYDIS_OPERAND_TYPE_IMMEDIATE:
+      kind = caml_alloc(2, 3);
+      if (z_op->imm.is_relative) {
+        Store_field(kind, 0, Val_long(1));
+      } else {
+        Store_field(kind, 0, Val_long(0));
+      }
+      if (z_op->imm.is_signed) {
+        imm = caml_alloc(1, 0);
+      } else {
+        imm = caml_alloc(1, 1);
+      }
+      Store_field(imm, 0, caml_copy_int64(z_op->imm.value.s));
+      Store_field(kind, 1, imm);
+      break;
   }
 
   Store_field(op, 8, kind);
@@ -154,8 +154,7 @@ static value zydis_decoder_decode_internal(value decoder, value bytes, const siz
     Data_custom_val(decoder),
     String_val(bytes) + offs,
     len - offs,
-    z_insn
-    );
+    z_insn);
   if (res != ZYAN_STATUS_SUCCESS) {
     return Val_unit;
   }
@@ -268,8 +267,7 @@ value zydis_formatter_format_insn(value formatter, value insn, value addr)
     Data_custom_val(insn),
     buffer,
     255,
-    Int64_val(addr)
-    );
+    Int64_val(addr));
   size_t len = strlen(buffer);
   string = caml_alloc_string(len);
   memcpy(String_val(string), buffer, len);
