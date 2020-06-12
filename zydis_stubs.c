@@ -8,29 +8,15 @@
 
 #include <Zydis/Zydis.h>
 
-CAMLprim int64_t zydis_get_version() {
-  return ZydisGetVersion();
-}
-
-value zydis_get_version_byte(value unit) {
-  CAMLparam1 (unit);
-  CAMLreturn (caml_copy_int64(zydis_get_version()));
-}
-
-value zydis_is_feature_enabled(value feature) {
-  CAMLparam1 (feature);
-  CAMLreturn (Val_bool(ZydisIsFeatureEnabled(Unsigned_long_val(feature)) == ZYAN_STATUS_TRUE));
-}
-
 static struct custom_operations zydis_decoder_ops = {
-  .identifier                                     = "ZydisDecoder",
-  .finalize                                       = NULL,
-  .compare                                        = NULL,
-  .hash                                           = NULL,
-  .serialize                                      = NULL,
-  .deserialize                                    = NULL,
-  .compare_ext                                    = NULL,
-  .fixed_length                                   = NULL,
+  .identifier   = "ZydisDecoder",
+  .finalize     = NULL,
+  .compare      = NULL,
+  .hash         = NULL,
+  .serialize    = NULL,
+  .deserialize  = NULL,
+  .compare_ext  = NULL,
+  .fixed_length = NULL,
 };
 
 value zydis_decoder_init(value mode, value width) {
@@ -86,14 +72,14 @@ static value wrap_decoded_operand(const ZydisDecodedOperand* z_op) {
   // Create the appropiate kind.
   switch (z_op->type) {
   case ZYDIS_OPERAND_TYPE_UNUSED:
-    kind              = Val_long(0);
+    kind = Val_long(0);
     break;
   case ZYDIS_OPERAND_TYPE_REGISTER:
-    kind              = caml_alloc(1, 0);
+    kind = caml_alloc(1, 0);
     Store_field(kind, 0, Val_long(z_op->reg.value - 1));
     break;
   case ZYDIS_OPERAND_TYPE_MEMORY:
-    kind              = caml_alloc(6, 1);
+    kind = caml_alloc(6, 1);
     Store_field(kind, 0, Val_long(z_op->mem.type));
     Store_optional_field(kind, 1, z_op->mem.segment);
     Store_optional_field(kind, 2, z_op->mem.base);

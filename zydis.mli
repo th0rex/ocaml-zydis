@@ -174,7 +174,3 @@ module Decoder : sig
   val decode_n : decoder:t -> ?offset:nativeint -> buffer:bytes -> unit -> Instruction.t option
   val set_enabled : decoder:t -> mode:Enums.machine_mode -> v:bool -> unit
 end
-
-val is_feature_enabled : Enums.feature -> bool
-
-val version : unit -> int64 * int64 * int64 * int64

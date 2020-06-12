@@ -145,10 +145,6 @@ module Instruction = struct
     }
 end
 
-external get_version : unit -> (int64 [@unboxed])
-  = "zydis_get_version_byte" "zydis_get_version" [@@noalloc]
-external is_feature_enabled : feature -> bool = "zydis_is_feature_enabled"
-
 external zydis_decoder_init : machine_mode -> address_width -> zydis_decoder = "zydis_decoder_init"
 external zydis_decoder_enable : zydis_decoder -> machine_mode -> bool -> unit = "zydis_decoder_enable"
 external zydis_decoder_decode_long : zydis_decoder -> bytes -> int -> Instruction.t option = "zydis_decoder_decode_long"
@@ -164,11 +160,3 @@ module Decoder = struct
   let decode_n ~decoder ?(offset=0n) ~buffer () = zydis_decoder_decode_native decoder buffer offset
   let set_enabled ~decoder ~mode ~v = zydis_decoder_enable decoder mode v
 end
-
-let version () =
-  let v = get_version() in
-  let major = Int64.shift_right v 48 in
-  let minor = Int64.(logand (shift_right v 32) 0xFFFFL)in
-  let patch = Int64.(logand (shift_right v 16) 0xFFFFL) in
-  let build = Int64.logand v 0xFFFFL in
-  (major, minor, patch, build)
