@@ -1,3 +1,9 @@
 (executable
  (name simple)
+ (modules simple)
+ (libraries zydis))
+
+(executable
+ (name disassembler)
+ (modules disassembler)
  (libraries zydis))

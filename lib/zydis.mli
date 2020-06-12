@@ -223,18 +223,18 @@ module Decoder : sig
 
   val create : mode:Enums.machine_mode -> width:int -> t
 
-  val disable : decoder:t -> mode:Enums.machine_mode -> unit
+  val disable : t -> Enums.machine_mode -> unit
 
-  val enable : decoder:t -> mode:Enums.machine_mode -> unit
+  val enable : t -> Enums.machine_mode -> unit
 
-  val decode : decoder:t -> buffer:bytes -> int -> Instruction.t option
+  val decode : t -> bytes -> int -> Instruction.t option
   (** [decode ~decoder ~buffer offset] decodes a single instruction at
       [offset] in the given [buffer].
    *)
 
-  val decode_n : decoder:t -> buffer:bytes -> nativeint -> Instruction.t option
+  val decode_n : t -> bytes -> nativeint -> Instruction.t option
 
-  val set_enabled : decoder:t -> mode:Enums.machine_mode -> bool -> unit
+  val set_enabled : t -> Enums.machine_mode -> bool -> unit
 end
 
 module Formatter : sig
@@ -245,7 +245,7 @@ module Formatter : sig
   (* val set_property : unit  *)
   (* TODO: ^ wrap the properties nicer *)
 
-  val format : formatter:t -> insn:Instruction.t -> string
+  val format : t -> Instruction.t -> string
 
-  val format_addr : formatter:t -> insn:Instruction.t -> int64 -> string
+  val format_addr : t -> Instruction.t -> int64 -> string
 end

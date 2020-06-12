@@ -230,17 +230,17 @@ module Decoder = struct
     | 64 -> zydis_decoder_init mode AddressWidth64
     | _ -> raise InvalidAddressWidth
 
-  let disable ~decoder ~mode = zydis_decoder_enable decoder mode false
+  let disable decoder mode = zydis_decoder_enable decoder mode false
 
-  let enable ~decoder ~mode = zydis_decoder_enable decoder mode true
+  let enable decoder mode = zydis_decoder_enable decoder mode true
 
-  let decode ~decoder ~buffer offset =
+  let decode decoder buffer offset =
     zydis_decoder_decode_long decoder buffer offset
 
-  let decode_n ~decoder ~buffer offset =
+  let decode_n decoder buffer offset =
     zydis_decoder_decode_native decoder buffer offset
 
-  let set_enabled ~decoder ~mode v = zydis_decoder_enable decoder mode v
+  let set_enabled decoder mode v = zydis_decoder_enable decoder mode v
 end
 
 external zydis_formatter_init : formatter_style -> zydis_formatter
@@ -257,9 +257,9 @@ module Formatter = struct
 
   let create ~style = zydis_formatter_init style
 
-  let format ~formatter ~insn:{ raw_insn; _ } =
+  let format formatter { raw_insn; _ } =
     zydis_formatter_format_insn formatter raw_insn (-1L)
 
-  let format_addr ~formatter ~insn:{ raw_insn; _ } addr =
+  let format_addr formatter { raw_insn; _ } addr =
     zydis_formatter_format_insn formatter raw_insn addr
 end

@@ -14,7 +14,7 @@
     zydis-c/include
     zydis-c/dependencies/zycore/include
     config)
-  (flags -O2 -g -fPIC)))
+  (flags -O3 -march=native -g -fPIC)))
 
 (data_only_dirs zydis-c)
 

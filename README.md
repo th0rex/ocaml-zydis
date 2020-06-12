@@ -16,7 +16,7 @@ let buffer = Bytes.of_string "\x75\x2f"
 (* 0 is the offset into the buffer, so that it doesn't need to be
    copied.
  *)
-let insn = Zydis.Decoder.decode ~decoder ~buffer 0
+let insn = Zydis.Decoder.decode decoder buffer 0
 ```
 
 Results for `insn`:

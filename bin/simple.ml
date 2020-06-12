@@ -9,6 +9,6 @@ let buffer = Bytes.of_string "\x75\x2f"
 
 let () =
   print_string
-    ( match Decoder.decode ~decoder ~buffer 0 with
+    ( match Decoder.decode decoder buffer 0 with
     | None -> "failed to decode instruction\n"
-    | Some insn -> (Formatter.format ~formatter ~insn) ^ "\n" )
+    | Some insn -> Formatter.format formatter insn ^ "\n" )
