@@ -48,7 +48,7 @@ module Operand : sig
     | Ptr of int * int32
     | Imm of relative * immediate
 
-  type t = {
+  type t = private {
     id : int;
     visibility : Enums.operand_visibility;
     actions : Action.t;
@@ -187,7 +187,7 @@ module Instruction : sig
   (* Not implemented for now *)
   type avx
 
-  type meta = {
+  type meta = private {
     category : Enums.instruction_category;
     isa_set : Enums.isaset;
     isa_ext : Enums.isaext;
@@ -198,7 +198,7 @@ module Instruction : sig
   (* Not implemented for now *)
   type raw
 
-  type t = {
+  type t = private {
     mode : Enums.machine_mode;
     mnemonic : Enums.mnemonic;
     length : int;
