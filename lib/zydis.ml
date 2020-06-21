@@ -285,9 +285,10 @@ module Recursive = struct
   let create d buffer = {d; buffer; seen = IntSet.empty}
 
   let disassemble offs f t =
-    let get_imm _rip kind = match kind with
-      | Operand.Imm (_, Signed imm)
-      | Operand.Imm (_, Unsigned imm) ->
+    let get_imm rip kind = match kind with
+      | Operand.Imm (Relative, Signed imm) | Operand.Imm (Relative, Unsigned imm) ->
+        Some ((Int64.to_int imm) + rip)
+      | Operand.Imm (Absolute, Signed imm) | Operand.Imm (Absolute, Unsigned imm) ->
         Some (Int64.to_int imm)
       (* TODO: We would need the in-memory image for this to work.
       | Operand.Mem {base = Some RIP; displacement = Some disp; _} ->
@@ -309,17 +310,17 @@ module Recursive = struct
           let rip = x + insn.length in
           match insn.meta.category with
           | CALL -> (match get_imm rip insn.operands.(0).kind with
-            | Some imm -> go (rip + imm :: xs)
+            | Some imm -> go (imm :: xs)
             | None -> go xs
             )
           | COND_BR -> (match get_imm rip insn.operands.(0).kind with
-            | Some imm -> go (rip :: rip + imm :: xs)
-            | None -> go (x + insn.length :: xs)
+            | Some imm -> go (rip :: imm :: xs)
+            | None -> go (rip :: xs)
             )
           | RET -> go xs
           | _ -> match insn.mnemonic with
             | JMP -> (match get_imm rip insn.operands.(0).kind with
-              | Some imm -> go (rip + imm :: xs)
+              | Some imm -> go (imm :: xs)
               | None -> go xs
               )
             | _ -> go (rip :: xs)
