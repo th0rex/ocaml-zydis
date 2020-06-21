@@ -7,3 +7,8 @@
  (name disassembler)
  (modules disassembler)
  (libraries zydis))
+
+(executable
+ (name recursive)
+ (modules recursive)
+ (libraries zydis))

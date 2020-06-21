@@ -249,3 +249,12 @@ module Formatter : sig
 
   val format_addr : t -> Instruction.t -> int64 -> string
 end
+
+module Recursive : sig
+  type t
+
+  val create : Decoder.t -> bytes -> t
+
+  (* TODO: Maybe allow the callback to control the disassembler. *)
+  val disassemble : int -> (int -> Instruction.t -> unit) -> t -> unit
+end

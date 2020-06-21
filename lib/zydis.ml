@@ -263,3 +263,66 @@ module Formatter = struct
   let format_addr formatter { raw_insn; _ } addr =
     zydis_formatter_format_insn formatter raw_insn addr
 end
+
+module Recursive = struct
+  let compare_int a b =
+    let int_of_bool b = Obj.magic b in
+    int_of_bool (a > b) - int_of_bool (a < b)
+
+  module IntOrder : Set.OrderedType with type t = int = struct
+    type t = int
+    let compare = compare_int
+  end
+
+  module IntSet = Set.Make (IntOrder)
+
+  type t = {
+    d : Decoder.t;
+    buffer : bytes;
+    mutable seen : IntSet.t;
+  }
+
+  let create d buffer = {d; buffer; seen = IntSet.empty}
+
+  let disassemble offs f t =
+    let get_imm _rip kind = match kind with
+      | Operand.Imm (_, Signed imm)
+      | Operand.Imm (_, Unsigned imm) ->
+        Some (Int64.to_int imm)
+      (* TODO: We would need the in-memory image for this to work.
+      | Operand.Mem {base = Some RIP; displacement = Some disp; _} ->
+        let offs = (Int64.to_int disp) + rip in
+        Some (Bytes.get_int64_ne t.buffer offs |> Int64.to_int)
+      *)
+      | _ -> None
+    in
+    let rec go = function
+      | [] -> ()
+      | x :: xs when IntSet.mem x t.seen -> go xs
+      | x :: xs ->
+        (* TODO: Keep the set smaller by only adding branch targets. *)
+        t.seen <- IntSet.add x t.seen;
+        match Decoder.decode t.d t.buffer x with
+        | None -> go xs
+        | Some insn ->
+          f x insn;
+          let rip = x + insn.length in
+          match insn.meta.category with
+          | CALL -> (match get_imm rip insn.operands.(0).kind with
+            | Some imm -> go (rip + imm :: xs)
+            | None -> go xs
+            )
+          | COND_BR -> (match get_imm rip insn.operands.(0).kind with
+            | Some imm -> go (rip :: rip + imm :: xs)
+            | None -> go (x + insn.length :: xs)
+            )
+          | RET -> go xs
+          | _ -> match insn.mnemonic with
+            | JMP -> (match get_imm rip insn.operands.(0).kind with
+              | Some imm -> go (rip + imm :: xs)
+              | None -> go xs
+              )
+            | _ -> go (rip :: xs)
+    in
+    go [offs]
+end
