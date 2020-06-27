@@ -250,11 +250,29 @@ module Formatter : sig
   val format_addr : t -> Instruction.t -> int64 -> string
 end
 
-module Recursive : sig
+module type Memory = sig
   type t
 
-  val create : Decoder.t -> bytes -> t
+  type phys = int
+  type virt = int
+
+  val create : bytes -> t
+
+  val phys_of_virt : t -> virt -> phys
+
+  (* For the decoder *)
+  val bytes : t -> bytes
+
+  val load64 : t -> virt -> int64 option
+end
+
+module LinearMemory : Memory
+
+module Recursive (M : Memory) : sig
+  type t
+
+  val create : Decoder.t -> M.t -> t
 
   (* TODO: Maybe allow the callback to control the disassembler. *)
-  val disassemble : int -> (int -> Instruction.t -> unit) -> t -> unit
+  val disassemble : M.virt -> (M.virt -> Instruction.t -> unit) -> t -> unit
 end

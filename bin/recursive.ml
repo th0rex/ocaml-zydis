@@ -13,11 +13,15 @@ let buffer =
   close_in file;
   buffer
 
-let disassembler = Recursive.create decoder buffer
+module Rec = Recursive (LinearMemory)
+
+let mem = LinearMemory.create buffer
+
+let disassembler = Rec.create decoder mem
 
 let start = 0x2070
 
 let f offs insn =
   Printf.printf "0x%x %s\n" offs (Formatter.format formatter insn)
 
-let () = Recursive.disassemble start f disassembler
+let () = Rec.disassemble start f disassembler

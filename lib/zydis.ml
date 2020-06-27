@@ -264,7 +264,37 @@ module Formatter = struct
     zydis_formatter_format_insn formatter raw_insn addr
 end
 
-module Recursive = struct
+module type Memory = sig
+  type t
+
+  type phys = int
+  type virt = int
+
+  val create : bytes -> t
+
+  val phys_of_virt : t -> virt -> phys
+
+  val bytes : t -> bytes
+
+  val load64 : t -> virt -> int64 option
+end
+
+module LinearMemory : Memory = struct
+  type t = bytes
+
+  type phys = int
+  type virt = int
+
+  let create x = x
+
+  let phys_of_virt _ x = x
+
+  let bytes x = x
+
+  let load64 x offs = Some (Bytes.get_int64_le x offs)
+end
+
+module Recursive (M : Memory) = struct
   let compare_int a b =
     let int_of_bool b = Obj.magic b in
     int_of_bool (a > b) - int_of_bool (a < b)
@@ -278,11 +308,11 @@ module Recursive = struct
 
   type t = {
     d : Decoder.t;
-    buffer : bytes;
+    mem : M.t;
     mutable seen : IntSet.t;
   }
 
-  let create d buffer = {d; buffer; seen = IntSet.empty}
+  let create d mem = {d; mem; seen = IntSet.empty}
 
   let disassemble offs f t =
     let get_imm rip kind = match kind with
@@ -290,11 +320,9 @@ module Recursive = struct
         Some ((Int64.to_int imm) + rip)
       | Operand.Imm (Absolute, Signed imm) | Operand.Imm (Absolute, Unsigned imm) ->
         Some (Int64.to_int imm)
-      (* TODO: We would need the in-memory image for this to work.
       | Operand.Mem {base = Some RIP; displacement = Some disp; _} ->
         let offs = (Int64.to_int disp) + rip in
-        Some (Bytes.get_int64_ne t.buffer offs |> Int64.to_int)
-      *)
+        M.load64 t.mem offs |> Option.map Int64.to_int
       | _ -> None
     in
     let rec go = function
@@ -303,7 +331,9 @@ module Recursive = struct
       | x :: xs ->
         (* TODO: Keep the set smaller by only adding branch targets. *)
         t.seen <- IntSet.add x t.seen;
-        match Decoder.decode t.d t.buffer x with
+        let buffer = M.bytes t.mem in
+        let phys = M.phys_of_virt t.mem x in
+        match Decoder.decode t.d buffer phys with
         | None -> go xs
         | Some insn ->
           f x insn;
