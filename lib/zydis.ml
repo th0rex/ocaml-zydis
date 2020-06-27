@@ -289,9 +289,9 @@ module LinearMemory : Memory = struct
 
   let phys_of_virt _ x = x
 
-  let bytes x = x
+  let bytes t = t
 
-  let load64 x offs = Some (Bytes.get_int64_le x offs)
+  let load64 _t _offs = None (* Some (Bytes.get_int64_le x offs) *)
 end
 
 module Recursive (M : Memory) = struct
