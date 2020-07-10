@@ -339,11 +339,7 @@ module Recursive (M : Memory) = struct
           f x insn;
           let rip = x + insn.length in
           match insn.meta.category with
-          | CALL -> (match get_imm rip insn.operands.(0).kind with
-            | Some imm -> go (imm :: xs)
-            | None -> go xs
-            )
-          | COND_BR -> (match get_imm rip insn.operands.(0).kind with
+          | CALL | COND_BR -> (match get_imm rip insn.operands.(0).kind with
             | Some imm -> go (rip :: imm :: xs)
             | None -> go (rip :: xs)
             )
