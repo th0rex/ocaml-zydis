@@ -4,6 +4,7 @@
 
 (library
  (name zydis)
+ (public_name zydis)
  (foreign_archives zydis-c)
  (foreign_stubs
   (language c)
@@ -32,3 +33,21 @@
         -DZYDIS_BUILD_TOOLS=OFF)
       (run cmake --build build)))
     (copy zydis-c/build/libZydis.a libzydis-c.a)))))
+
+(rule
+ (deps (source_tree zydis-c))
+ (targets dllzydis-c.so)
+ (action
+  (no-infer
+   (progn
+    (chdir zydis-c
+     (progn
+      (run
+        cmake -B build -S .
+        -DCMAKE_C_FLAGS=-fPIC
+        -DCMAKE_BUILD_TYPE=Release
+        -DZYDIS_BUILD_SHARED_LIB=ON
+        -DZYDIS_BUILD_EXAMPLES=OFF
+        -DZYDIS_BUILD_TOOLS=OFF)
+      (run cmake --build build)))
+    (copy zydis-c/build/libZydis.so dllzydis-c.so)))))
