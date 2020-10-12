@@ -310,7 +310,12 @@ module Recursive (M : Memory) = struct
     d : Decoder.t;
     mem : M.t;
     mutable seen : IntSet.t;
-  }
+    }
+
+  type behav =
+    | Continue
+    | ContinueAt of M.virt
+    | Stop
 
   let create d mem = {d; mem; seen = IntSet.empty}
 
@@ -336,20 +341,25 @@ module Recursive (M : Memory) = struct
         match Decoder.decode t.d buffer phys with
         | None -> go xs
         | Some insn ->
-          f x insn;
-          let rip = x + insn.length in
-          match insn.meta.category with
-          | CALL | COND_BR -> (match get_imm rip insn.operands.(0).kind with
-            | Some imm -> go (rip :: imm :: xs)
-            | None -> go (rip :: xs)
-            )
-          | RET -> go xs
-          | _ -> match insn.mnemonic with
-            | JMP -> (match get_imm rip insn.operands.(0).kind with
-              | Some imm -> go (imm :: xs)
-              | None -> go xs
-              )
-            | _ -> go (rip :: xs)
+           match f x insn with
+           | Continue ->
+              branch insn (x + insn.length) xs
+           | ContinueAt rip ->
+              branch insn rip xs
+           | Stop -> ()
+    and branch insn rip xs =
+      match insn.meta.category with
+      | CALL | COND_BR -> (match get_imm rip insn.operands.(0).kind with
+                           | Some imm -> go (rip :: imm :: xs)
+                           | None -> go (rip :: xs)
+                          )
+      | RET -> go xs
+      | _ -> match insn.mnemonic with
+             | JMP -> (match get_imm rip insn.operands.(0).kind with
+                       | Some imm -> go (imm :: xs)
+                       | None -> go xs
+                      )
+             | _ -> go (rip :: xs)
     in
     go [offs]
 end

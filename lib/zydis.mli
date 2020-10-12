@@ -271,8 +271,12 @@ module LinearMemory : Memory
 module Recursive (M : Memory) : sig
   type t
 
+  type behav =
+    | Continue
+    | ContinueAt of M.virt
+    | Stop
+
   val create : Decoder.t -> M.t -> t
 
-  (* TODO: Maybe allow the callback to control the disassembler. *)
-  val disassemble : M.virt -> (M.virt -> Instruction.t -> unit) -> t -> unit
+  val disassemble : M.virt -> (M.virt -> Instruction.t -> behav) -> t -> unit
 end

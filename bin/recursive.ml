@@ -22,6 +22,7 @@ let disassembler = Rec.create decoder mem
 let start = 0x2070
 
 let f offs insn =
-  Printf.printf "0x%x %s\n" offs (Formatter.format formatter insn)
+  Printf.printf "0x%x %s\n" offs (Formatter.format formatter insn);
+  Rec.Continue
 
 let () = Rec.disassemble start f disassembler
