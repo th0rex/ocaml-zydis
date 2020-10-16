@@ -9,6 +9,7 @@ type immediate = Signed of int64 | Unsigned of int64
 type relative = Absolute | Relative
 
 val str_of_mnemonic : Enums.mnemonic -> string
+val str_of_reg : Enums.register -> string
 
 module Operand : sig
   module Action : sig
