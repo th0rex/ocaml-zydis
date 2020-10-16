@@ -8,6 +8,8 @@ type immediate = Signed of int64 | Unsigned of int64
 
 type relative = Absolute | Relative
 
+val str_of_mnemonic : Enums.mnemonic -> string
+
 module Operand : sig
   module Action : sig
     type t
