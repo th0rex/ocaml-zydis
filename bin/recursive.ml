@@ -25,4 +25,4 @@ let f offs insn =
   Printf.printf "0x%x %s\n" offs (Formatter.format formatter insn);
   Rec.Continue
 
-let () = Rec.disassemble start f disassembler
+let () = Rec.disassemble start ignore f disassembler

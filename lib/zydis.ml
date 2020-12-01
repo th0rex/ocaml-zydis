@@ -319,7 +319,7 @@ module Recursive (M : Memory) = struct
 
   let create d mem = {d; mem; seen = IntSet.empty}
 
-  let disassemble offs f t =
+  let disassemble offs already_found f t =
     let get_imm rip kind = match kind with
       | Operand.Imm (Relative, Signed imm) | Operand.Imm (Relative, Unsigned imm) ->
         Some ((Int64.to_int imm) + rip)
@@ -332,7 +332,9 @@ module Recursive (M : Memory) = struct
     in
     let rec go = function
       | [] -> ()
-      | x :: xs when IntSet.mem x t.seen -> go xs
+      | x :: xs when IntSet.mem x t.seen ->
+         already_found x;
+         go xs
       | x :: xs ->
         (* TODO: Keep the set smaller by only adding branch targets. *)
         t.seen <- IntSet.add x t.seen;

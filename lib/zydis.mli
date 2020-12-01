@@ -281,5 +281,5 @@ module Recursive (M : Memory) : sig
 
   val create : Decoder.t -> M.t -> t
 
-  val disassemble : M.virt -> (M.virt -> Instruction.t -> behav) -> t -> unit
+  val disassemble : M.virt -> (M.virt -> unit) -> (M.virt -> Instruction.t -> behav) -> t -> unit
 end
